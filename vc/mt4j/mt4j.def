@@ -1,0 +1,17 @@
+LIBRARY mt4j
+
+EXPORTS newInstance
+		processTick
+		addNewBar
+		destroy
+		setIntProperty
+		setDoubleProperty
+		setStringProperty
+		setBoolProperty
+		getBoolProperty
+		getStringProperty
+		getIntProperty
+		getDoubleProperty
+		initObject
+		deinitObject
+		callNoArgsMethod
