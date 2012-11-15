@@ -1,10 +1,12 @@
 Java connector for Metatrader (MT4)
+===================================
 
 This simple application shows you how to write 
 your own extension for metatrader (EA, indicator, library) in JAVA.
 The JAVA code is executed in a virtual machine which runs inside the terminal.exe (MT4) process. 
 
-Repository folders:
+Repository folders
+------------------
 
 1. java folder
 
@@ -20,6 +22,7 @@ Contains a Visual Studio project with the sources for the MT4 Java connector.
 
 
 Steps to run this application
+-----------------------------
 
 1. Copy the experts folder from your mt4 source folder to your Metatrader installation directory <MT4 directory>
 
