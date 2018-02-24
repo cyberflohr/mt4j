@@ -10,18 +10,18 @@
 #define MT4J_API __declspec(dllimport)
 #endif
 
-MT4J_API int __stdcall newInstance(char * className);
+MT4J_API int __stdcall newInstance(LPWSTR className);
 MT4J_API int __stdcall processTick(int jvmCtx, double bid, double ask);
 MT4J_API void __stdcall addNewBar(int jvmCtx, double high, double low, double open, double close);
 MT4J_API void __stdcall destroy(int jctx);
-MT4J_API void __stdcall setIntProperty(int jvmCtx, char * propertyName, int value);
-MT4J_API void __stdcall setBoolProperty(int jvmCtx, char * propertyName, int value);
-MT4J_API void __stdcall setDoubleProperty(int jvmCtx, char * propertyName, double value);
-MT4J_API void __stdcall setStringProperty(int jvmCtx, char * propertyName, char * value);
-MT4J_API int __stdcall getBoolProperty(int jvmCtx, char * propertyName);
-MT4J_API char * __stdcall getStringProperty(int jvmCtx, char * propertyName);
-MT4J_API int __stdcall getIntProperty(int jvmCtx, char * propertyName);
-MT4J_API double __stdcall getDoubleProperty(int jvmCtx, char * propertyName);
+MT4J_API void __stdcall setIntProperty(int jvmCtx, LPWSTR propertyName, int value);
+MT4J_API void __stdcall setBoolProperty(int jvmCtx, LPWSTR propertyName, int value);
+MT4J_API void __stdcall setDoubleProperty(int jvmCtx, LPWSTR propertyName, double value);
+MT4J_API void __stdcall setStringProperty(int jvmCtx, LPWSTR propertyName, LPWSTR value);
+MT4J_API int __stdcall getBoolProperty(int jvmCtx, LPWSTR propertyName);
+MT4J_API LPWSTR __stdcall getStringProperty(int jvmCtx, LPWSTR propertyName);
+MT4J_API int __stdcall getIntProperty(int jvmCtx, LPWSTR propertyName);
+MT4J_API double __stdcall getDoubleProperty(int jvmCtx, LPWSTR propertyName);
 MT4J_API void __stdcall initObject(int jvmCtx);
 MT4J_API void __stdcall deinitObject(int jvmCtx);
-MT4J_API void __stdcall callNoArgsMethod(int jvmCtx, char * method);
+MT4J_API void __stdcall callNoArgsMethod(int jvmCtx, LPWSTR method);

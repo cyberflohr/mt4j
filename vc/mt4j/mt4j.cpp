@@ -29,7 +29,7 @@ jint JNICALL jvmOutputFctn(FILE *fp, const char *format, va_list args)
 {
 	if (logHandle == NULL) {
 		char filename[255];
-		sprintf(filename, "%s\\experts\\files\\mt4j.log", MT4_BASE_DIR);
+		sprintf(filename, "%s\\mt4j.log", MT4_BASE_DIR);
 		logHandle = fopen(filename,"a");
 	}
 
@@ -125,7 +125,7 @@ void destroyVM() {
 bool readPropertiesFile() {
 
 	char filename[255];
-	sprintf(filename, "%s\\experts\\libraries\\mt4j.properties", MT4_BASE_DIR);
+	sprintf(filename, "%s\\mt4j.properties", MT4_BASE_DIR);
 	FILE *propFile = fopen(filename, "rt");
 	if (propFile == NULL) {
 		log("mt4j.properties file not found in MT4 libraries directory");
@@ -236,10 +236,10 @@ void detachCurrentThread() {
 	}
 }
 
-jmethodID findProperyMethod(int jvmCtx, char * prefix, char * propertyName, char *signature) {
+jmethodID findProperyMethod(int jvmCtx, char * prefix, LPWSTR propertyName, char *signature) {
 
 	char methodName[255];
-	sprintf(methodName, "%s%s", prefix, propertyName);
+	sprintf(methodName, "%s%ls", prefix, propertyName);
 
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -247,7 +247,7 @@ jmethodID findProperyMethod(int jvmCtx, char * prefix, char * propertyName, char
 		jmethodID processMethod = env->GetMethodID(cls, methodName, signature);
 
 		if (processMethod == NULL && (strcmp(prefix, "is") == 0)) {
-			sprintf(methodName, "get%s", propertyName);
+			sprintf(methodName, "get%ls", propertyName);
 			processMethod = env->GetMethodID(cls, methodName, signature);
 		}
 
@@ -262,7 +262,7 @@ jmethodID findProperyMethod(int jvmCtx, char * prefix, char * propertyName, char
 }
 // +++++++++++++++++++++ PUBLIC API starts here ++++++++++++++++++++
 
-MT4J_API int __stdcall newInstance(char * className)
+MT4J_API int __stdcall newInstance(LPWSTR lpClassName)
 {
 	int jvmCtx=-1;
 	if (eaCounter == 0) {
@@ -284,11 +284,15 @@ MT4J_API int __stdcall newInstance(char * className)
 		return -1;
 	}
 
+	char *className = (char*)malloc(wcslen(lpClassName)+1);
+	wcstombs(className, lpClassName, wcslen(lpClassName));
+	className[wcslen(lpClassName)] = 0;
+
 	eaCounter++;
-	log("initialize(%s) : %d", className, jvmCtx); 
+	log("initialize(%s) : %d", className, jvmCtx);
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
-
+		log("loading EA class: %s", className);
 		jclass eaClass = env->FindClass(className);
 		jmethodID constructor = env->GetMethodID(eaClass, "<init>", "()V");
 		jobject o = env->NewObject(eaClass, constructor);
@@ -298,7 +302,7 @@ MT4J_API int __stdcall newInstance(char * className)
 		env->DeleteLocalRef(eaClass);
 		env->DeleteLocalRef(o);
 	}
-
+	free(className);
 	return jvmCtx;
 }
 
@@ -350,7 +354,7 @@ MT4J_API void __stdcall destroy(int jctx)
 	return;
 }
 
-MT4J_API void __stdcall setIntProperty(int jvmCtx, char * propertyName, int value)
+MT4J_API void __stdcall setIntProperty(int jvmCtx, LPWSTR propertyName, int value)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -364,7 +368,7 @@ MT4J_API void __stdcall setIntProperty(int jvmCtx, char * propertyName, int valu
 	return;
 }
 
-MT4J_API int __stdcall getIntProperty(int jvmCtx, char * propertyName)
+MT4J_API int __stdcall getIntProperty(int jvmCtx, LPWSTR propertyName)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -378,7 +382,7 @@ MT4J_API int __stdcall getIntProperty(int jvmCtx, char * propertyName)
 	return 0;
 }
 
-MT4J_API void __stdcall setDoubleProperty(int jvmCtx, char * propertyName, double value)
+MT4J_API void __stdcall setDoubleProperty(int jvmCtx, LPWSTR propertyName, double value)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -392,7 +396,7 @@ MT4J_API void __stdcall setDoubleProperty(int jvmCtx, char * propertyName, doubl
 	return;
 }
 
-MT4J_API double __stdcall getDoubleProperty(int jvmCtx, char * propertyName)
+MT4J_API double __stdcall getDoubleProperty(int jvmCtx, LPWSTR propertyName)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -406,7 +410,7 @@ MT4J_API double __stdcall getDoubleProperty(int jvmCtx, char * propertyName)
 	return 0;
 }
 
-MT4J_API void __stdcall setStringProperty(int jvmCtx, char * propertyName, char * value)
+MT4J_API void __stdcall setStringProperty(int jvmCtx, LPWSTR propertyName, LPWSTR lpValue)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -415,17 +419,17 @@ MT4J_API void __stdcall setStringProperty(int jvmCtx, char * propertyName, char 
 			return;
 		}
 
-		jstring str = env->NewStringUTF(value);
-		env->CallVoidMethod(jvmClients[jvmCtx],processMethod,str);
+		jstring str = env->NewString((jchar*)lpValue, wcslen(lpValue));
+		env->CallVoidMethod(jvmClients[jvmCtx], processMethod, str);
 		env->DeleteLocalRef(str);
 	}
 	return;
 }
 
-MT4J_API char * __stdcall getStringProperty(int jvmCtx, char * propertyName)
+MT4J_API LPWSTR __stdcall getStringProperty(int jvmCtx, LPWSTR propertyName)
 {
 	JNIEnv *env = prepareEnv();
-	char * retStr = NULL;
+	wchar_t * retStr = NULL;
 	if (env != NULL) {
 		jmethodID processMethod = findProperyMethod(jvmCtx, "get", propertyName, "()Ljava/lang/String;");
 		if (processMethod == NULL) {
@@ -434,12 +438,12 @@ MT4J_API char * __stdcall getStringProperty(int jvmCtx, char * propertyName)
 
 		jstring str = (jstring)env->CallObjectMethod(jvmClients[jvmCtx],processMethod);
 		if (str != NULL) {
-			const char *cstr = env->GetStringUTFChars(str, NULL);
+			const jchar *cstr = env->GetStringChars(str, NULL);
 
 			if (cstr != NULL) {
-				retStr = (char*)malloc(strlen(cstr)+1);
-				strcpy(retStr, cstr);
-				env->ReleaseStringUTFChars(str, cstr);
+				retStr = (wchar_t*)malloc(env->GetStringLength(str)+1);
+				wcscpy(retStr, (wchar_t*)cstr);
+				env->ReleaseStringChars(str, cstr);
 			}
 
 			env->DeleteLocalRef(str);
@@ -448,7 +452,7 @@ MT4J_API char * __stdcall getStringProperty(int jvmCtx, char * propertyName)
 	return retStr;
 }
 
-MT4J_API void __stdcall setBoolProperty(int jvmCtx, char * propertyName, int value)
+MT4J_API void __stdcall setBoolProperty(int jvmCtx, LPWSTR propertyName, int value)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -462,7 +466,7 @@ MT4J_API void __stdcall setBoolProperty(int jvmCtx, char * propertyName, int val
 	return;
 }
 
-MT4J_API int __stdcall getBoolProperty(int jvmCtx, char * propertyName)
+MT4J_API int __stdcall getBoolProperty(int jvmCtx, LPWSTR propertyName)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
@@ -480,7 +484,7 @@ MT4J_API void __stdcall initObject(int jvmCtx)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
-		jmethodID processMethod = findProperyMethod(jvmCtx, "", "init", "()V");
+		jmethodID processMethod = findProperyMethod(jvmCtx, "", L"init", "()V");
 		if (processMethod == NULL) {
 			return;
 		}
@@ -494,7 +498,7 @@ MT4J_API void __stdcall deinitObject(int jvmCtx)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
-		jmethodID processMethod = findProperyMethod(jvmCtx, "", "deinit", "()V");
+		jmethodID processMethod = findProperyMethod(jvmCtx, "", L"deinit", "()V");
 		if (processMethod == NULL) {
 			return;
 		}
@@ -504,7 +508,7 @@ MT4J_API void __stdcall deinitObject(int jvmCtx)
 	return;
 }
 
-MT4J_API void __stdcall callNoArgsMethod(int jvmCtx, char * method)
+MT4J_API void __stdcall callNoArgsMethod(int jvmCtx, LPWSTR method)
 {
 	JNIEnv *env = prepareEnv();
 	if (env != NULL) {
